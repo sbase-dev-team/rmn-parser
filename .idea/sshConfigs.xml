@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SshConfigs">
+    <configs>
+      <sshConfig host="127.0.0.1" id="e7f59f05-bac0-4465-a0e8-50edf840d6d4" keyPath="D:\Vagrant\vagrant.ppk" port="2222" nameFormat="DESCRIPTIVE" username="vagrant" useOpenSSHConfig="true" />
+    </configs>
+  </component>
+</project>
