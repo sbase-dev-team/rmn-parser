@@ -90,6 +90,7 @@ class Scraper {
         "https://vertavahealth.com/" => "Vertavahealth_com", // example https://vertavahealth.com/locations/
         "https://recoverycenters.net/" => "Recoverycenters_net", // example https://recoverycenters.net/recovery-center/new-york/
         "https://www.burningtree.com/" => "Burningtree_com", // example https://www.burningtree.com/
+        "http://greenfieldcenter.net/" => "Greenfieldcenter_net", // example http://greenfieldcenter.net/
     ];
 
     public function __construct() {
@@ -277,7 +278,8 @@ class Scraper {
 //        $scrappedData = $this->search_term("inurl:https://www.steptorehab.com/rehab-centers/alabama");
 //        $scrappedData = $this->search_term("inurl:https://vertavahealth.com/locations/");
 //        $scrappedData = $this->search_term("inurl:https://recoverycenters.net/recovery-center/south-dakota/wakpala/");
-        $scrappedData = $this->search_term("inurl:https://www.burningtree.com/");
+//        $scrappedData = $this->search_term("inurl:https://www.burningtree.com/");
+        $scrappedData = $this->search_term("inurl:http://greenfieldcenter.net/");
         var_dump($scrappedData);
         return;
     }
