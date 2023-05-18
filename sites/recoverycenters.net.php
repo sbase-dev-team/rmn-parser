@@ -28,6 +28,202 @@ class Recoverycenters_net extends AScraper
 
         $xpath = new DOMXPath($dom);
 
+        // parse pages like https://recoverycenters.net/recovery-centers/florida/clearwater/fairwinds-residential-treatment-center/
+        $rso = $xpath->query("//p[contains(concat(' ', normalize-space(@class), ' '), ' pccolor ')]/text()[1]");
+
+        $count = 0;
+        if ($rso->length > 0) {
+            foreach ($rso as $item) {
+                //get parent element
+                $parent = $item->parentNode;
+
+                if ($parent instanceof DOMDocument) {
+                    continue;
+                }
+
+                if (!$item->textContent) {
+                    continue;
+                }
+
+                $tempDataItem = [];
+
+                if (str_contains(rmnTrim($item->textContent), " | Located In")) {
+                    $tempDataItem["name"] = str_replace(" | Located In", "", rmnTrim($item->textContent));
+                } else {
+                    $tempDataItem["name"] = rmnTrim($item->textContent);
+                }
+
+                $itemprop = $xpath->query("//span[contains(concat(' ', normalize-space(@class), ' '), ' treataddresstop ')]/span/text()[1]", $parent);
+
+                if ($itemprop->length > 0) {
+                    $tempDataItem["addressStreet"] = rmnTrim($itemprop->item(0)->textContent);
+                }
+
+                $itemprop = $xpath->query("//span[contains(concat(' ', normalize-space(@class), ' '), ' treataddresstop ')]/span/text()[2]", $parent);
+
+                if ($itemprop->length > 0) {
+                    $arr = explode(", ", rmnTrim($itemprop->item(0)->textContent));
+                    if (count($arr) === 2) {
+                        if (!empty($arr[0])) {
+                            $tempDataItem["addressLocality"] = rmnTrim($arr[0]);
+                        }
+                        if (!empty($arr[1])) {
+                            $regionAndPostalCode = explode(" ", rmnTrim($arr[1]));
+                            if (count($regionAndPostalCode) === 2) {
+                                if (!empty($regionAndPostalCode[0])) {
+                                    $tempDataItem["addressRegion"] = rmnTrim($regionAndPostalCode[0]);
+                                }
+                                if (!empty($regionAndPostalCode[1])) {
+                                    $tempDataItem["postalCode"] = rmnTrim($regionAndPostalCode[1]);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (
+                    !empty($tempDataItem["addressStreet"]) &&
+                    !empty($tempDataItem["addressLocality"]) &&
+                    !empty($tempDataItem["addressRegion"]) &&
+                    !empty($tempDataItem["postalCode"])
+                ) {
+
+                    $tempDataItem["address"] = $tempDataItem["addressStreet"] . ", " .
+                        $tempDataItem["addressLocality"] . ", " .
+                        $tempDataItem["addressRegion"] . " " .
+                        $tempDataItem["postalCode"];
+                }
+
+                $itemprop = $xpath->query("//span[contains(concat(' ', normalize-space(@class), ' '), ' treatsec1weburl ')]/span", $parent);
+
+                if ($itemprop->length > 0) {
+                    $tempDataItem["website"] = rmnTrim($itemprop->item(0)->textContent);
+                }
+
+                $itemprop = $xpath->query("//div[contains(concat(' ', normalize-space(@class), ' '), ' call_btn_in ')]/a", $parent);
+
+                if ($itemprop->length > 0) {
+                    $tempDataItem["telephone"] = rmnTrim($itemprop->item(0)->textContent);
+                }
+
+                $itemprop = $xpath->query("//div[contains(concat(' ', normalize-space(@class), ' '), ' call_btn_in ')]/a/@href", $parent);
+
+                if ($itemprop->length > 0) {
+                    $tempDataItem["telephoneLink"] = rmnTrim($itemprop->item(0)->textContent);
+                }
+
+                if (!empty($tempDataItem)) {
+                    $count++;
+                    $tempDataItem["position"] = $count;
+                    $data[] = $tempDataItem;
+                }
+            }
+        }
+
+        // parse listings from pages
+        // like https://recoverycenters.net/recovery-centers/florida/clearwater/fairwinds-residential-treatment-center/
+        $rso = $xpath->query("//div[@id='view-listings'][div/h2[contains(text(), 'More Recovery Centers Nearby')]]/section/div/div/div/div/header/h4/a");
+
+        if ($rso->length > 0) {
+            foreach ($rso as $item) {
+                //get parent element
+                $parent = $item->parentNode;
+
+                if ($parent instanceof DOMDocument) {
+                    continue;
+                }
+
+                if (!$item->textContent) {
+                    continue;
+                }
+
+                $tempDataItem = [];
+
+                $tempDataItem["name"] = rmnTrim($item->textContent);
+
+                $itemprop = $xpath->query("parent::header/parent::div/div/p[contains(concat(' ', normalize-space(@class), ' '), ' Card__phone-number xs-hide sm-hide ')]", $parent);
+
+                if ($itemprop->length > 0) {
+                    $tempDataItem["telephone"] = rmnTrim($itemprop->item(0)->textContent);
+                }
+
+                $itemprop = $xpath->query("parent::header/parent::div/footer/div/div/p[contains(concat(' ', normalize-space(@class), ' '), ' Card__footer__location ')]/text()[1]", $parent);
+
+                if ($itemprop->length > 0) {
+
+                    if (preg_match(
+                        "/^(\\d{1,}) [a-zA-Z0-9\\s]+(\\,)? [a-zA-Z]+(\\,)? [A-Z]{2} [0-9]{5,6}$/",
+                        rmnTrim($itemprop->item(0)->textContent))
+                    ) {
+                        $tempDataItem["address"] = rmnTrim($itemprop->item(0)->textContent);
+                        $arr = explode(", ", $tempDataItem["address"]);
+
+                        if (count($arr) === 2) {
+                            if (!empty($arr[0])) {
+                                $tempDataItem["addressStreet"] = rmnTrim($arr[0]);
+                            }
+                            if (!empty($arr[1])) {
+                                $regionAndPostalCode = explode(" ", rmnTrim($arr[1]));
+
+                                if (count($regionAndPostalCode) === 2) {
+                                    if (!empty($regionAndPostalCode[0])) {
+                                        $tempDataItem["addressRegion"] = rmnTrim($regionAndPostalCode[0]);
+                                    }
+                                    if (!empty($regionAndPostalCode[1])) {
+                                        $tempDataItem["postalCode"] = rmnTrim($regionAndPostalCode[1]);
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        $tempDataItem["addressStreet"] = rmnTrim($itemprop->item(0)->textContent);
+
+                        $itemprop = $xpath->query("parent::header/parent::div/footer/div/div/p[contains(concat(' ', normalize-space(@class), ' '), ' Card__footer__location ')]/text()[2]", $parent);
+
+                        if ($itemprop->length > 0) {
+                            $arr = explode(", ", rmnTrim($itemprop->item(0)->textContent));
+
+                            if (count($arr) === 2) {
+                                if (!empty($arr[0])) {
+                                    $tempDataItem["addressLocality"] = rmnTrim($arr[0]);
+                                }
+                                if (!empty($arr[1])) {
+                                    $regionAndPostalCode = explode(" ", rmnTrim($arr[1]));
+
+                                    if (count($regionAndPostalCode) === 2) {
+                                        if (!empty($regionAndPostalCode[0])) {
+                                            $tempDataItem["addressRegion"] = rmnTrim($regionAndPostalCode[0]);
+                                        }
+                                        if (!empty($regionAndPostalCode[1])) {
+                                            $tempDataItem["postalCode"] = rmnTrim($regionAndPostalCode[1]);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        if (
+                            !empty($tempDataItem["addressStreet"]) &&
+                            !empty($tempDataItem["addressLocality"]) &&
+                            !empty($tempDataItem["addressRegion"]) &&
+                            !empty($tempDataItem["postalCode"])
+                        ) {
+                            $tempDataItem["address"] = $tempDataItem["addressStreet"] . ", " .
+                                $tempDataItem["addressLocality"] . ", " .
+                                $tempDataItem["addressRegion"] . " " .
+                                $tempDataItem["postalCode"];
+                        }
+                    }
+                }
+
+                if (!empty($tempDataItem)) {
+                    $count++;
+                    $tempDataItem["position"] = $count;
+                    $data[] = $tempDataItem;
+                }
+            }
+        }
+
         // parse pages like https://recoverycenters.net/recovery-center/new-york/
         $rso = $xpath->query("//script[contains(text(), 'window.onload')]");
 
@@ -46,7 +242,6 @@ class Recoverycenters_net extends AScraper
             );
         }
 
-        $count = 0;
         if (gettype($request) === "array" && !empty($request) && count($request) > 0) {
             foreach ($request as $item) {
                 //response to dom document
