@@ -86,7 +86,7 @@ class Rehabcenters_com extends AScraper
         }
 
         // parse pages like https://rehabcenters.com/listing/centre-inc-3
-        $rso = $xpath->query("//div[@id='content']/span/h1[@itemprop='name']");
+        $rso = $xpath->query("//div[@id='content']/span[div[@id='center_profile']]/h1[@itemprop='name']");
 
         if ($rso->length > 0) {
             foreach ($rso as $item) {
